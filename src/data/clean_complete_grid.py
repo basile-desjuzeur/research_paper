@@ -8,13 +8,17 @@ import numpy as np
 import geopandas as gpd
 import pandas as pd
 from shapely import box as shapely_box
+from shapely import wkb
 import fiona
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+
 PATH       = "./data/raw/grille200m_gpkg/grille200m_metropole_gpkg/grille200m_metropole.gpkg"
 OUT        = "./data/processed/full_1km_grid.parquet"
 CHUNK_SIZE = 500_000
+CRS_IN = "EPSG:3035" 
+CRS_OUT = "EPSG:2154" 
 
 
 def _ids_to_grid(ids: pd.Series) -> gpd.GeoDataFrame:
@@ -58,7 +62,11 @@ def _iter_chunks(path: str, chunk_size: int):
         yield pd.Series(buffer, dtype="string")
 
 
-def clean_complete_grid(path: str = PATH, out: str = OUT, chunk_size: int = CHUNK_SIZE) -> None:
+def chunk_dissolve_grid(path: str = PATH, out: str = OUT, chunk_size: int = CHUNK_SIZE) -> None:
+    """ 
+    Dissous les carreaux de 200 m en carreaux de 1km (lazy).
+    Ecrit le résultat dans un fichier parquet temporaire.
+    """
     if not os.path.exists(path):
         raise FileNotFoundError(
             "Télécharger le fichier gpkg sur https://www.insee.fr/fr/statistiques/6214726#consulter\n"
@@ -66,7 +74,6 @@ def clean_complete_grid(path: str = PATH, out: str = OUT, chunk_size: int = CHUN
         )
 
     writer = None
-    total = 0
 
     for chunk_ids in _iter_chunks(path, chunk_size):
         gdf = _ids_to_grid(chunk_ids)
@@ -80,14 +87,35 @@ def clean_complete_grid(path: str = PATH, out: str = OUT, chunk_size: int = CHUN
         if writer is None:
             writer = pq.ParquetWriter(out, table.schema)
         writer.write_table(table)
-        total += len(gdf)
-        print(f"  {total:,} carreaux écrits...", end="\r")
 
     if writer:
         writer.close()
 
-    print(f"\n✓ {total:,} carreaux 1km écrits dans {out}")
 
+def change_parquet_to_geoparquet(path:str = OUT) -> None:
+    """
+    Le fichier écrit dans clean_complete_grid est un parquet classique, on veut lui ajouter des metadonnées géographiques.
+    On est obligé de réécrire un nouveau fichier, donc on supprime l'ancien.
+    """
+
+    df = pd.read_parquet(OUT)
+
+    # convertit le binaire en géométrie
+    df["geometry"] = df["geometry"].apply(wkb.loads)  # type: ignore
+
+    gdf = gpd.GeoDataFrame(df, geometry="geometry", crs=CRS_IN)
+
+    gdf.to_crs(CRS_OUT, inplace=True)
+
+    # écrit le fichier final
+    new_path = path.replace(".parquet", ".geoparquet")
+    gdf.to_parquet(new_path)
+
+    os.remove(path)
+
+def clean_complete_grid():
+    chunk_dissolve_grid()
+    change_parquet_to_geoparquet()
 
 if __name__ == "__main__":
     clean_complete_grid()

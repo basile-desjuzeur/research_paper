@@ -66,5 +66,5 @@ def clean_population_data() -> gpd.GeoDataFrame:
 
 if __name__ == "__main__":
     gdf = clean_population_data()
-    path = "./data/processed/population_carroyée.parquet"
+    path = "./data/processed/population_carroyée.geoparquet"
     gdf.to_parquet(path, index=False)
