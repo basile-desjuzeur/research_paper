@@ -3,3 +3,5 @@ data
 !src/data
 __pycache__
 .ipynb_checkpoints
+.venv/
+src/research_paper_foodbiome.egg-info
