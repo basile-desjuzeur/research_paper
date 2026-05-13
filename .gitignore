@@ -5,3 +5,4 @@ __pycache__
 .ipynb_checkpoints
 .venv/
 src/research_paper_foodbiome.egg-info
+credentials/credentials.json
