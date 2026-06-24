@@ -16,11 +16,12 @@ Pour reproduire les résultats, il est nécessaire de suivre les étapes suivant
 | Population carroyée (1 km) | [lien](https://www.insee.fr/fr/statistiques/7655464?sommaire=7655515) | [carreaux_1km_met.csv](./data/raw/carreaux_1km_met.csv) |
 | Grille 1 km complète | [lien](https://www.insee.fr/fr/statistiques/6214726#consulter) | [grille200m_metropole.gpkg](data/raw/grille200m_gpkg/grille200m_metropole_gpkg/grille200m_metropole.gpkg) |
 | Répertoire Sirene | [API](https://portail-api.insee.fr/catalog/api/2ba0e549-5587-3ef1-9082-99cd865de66f/doc?page=1383565d-39b7-4379-8356-5d39b723798e#variables-non-historis%C3%A9es) | ?|
+| Géométrie des régions | [lien](https://www.data.gouv.fr/api/1/datasets/r/aa76860a-51af-4744-a593-4c19af2570b8) | [regions-100m.geojson](./data/raw/regions-100m.geojson) |
 
 Le retraitement des données a été fait dans [src/data](./src/data/) est reproductible avec le point d'entrée [src/data/make_dataset.py](./src/data/make_dataset.py).
 
 Il faut lancer :
-```bash
+```python
 python src/data/make_dataset.py
 ```
 
